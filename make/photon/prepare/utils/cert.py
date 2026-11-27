@@ -118,7 +118,13 @@ def prepare_trust_ca(config_dict):
         shutil.rmtree(shared_cert_dir)
     shared_cert_dir.mkdir(parents=True, exist_ok=True)
 
-    internal_ca_src = internal_tls_dir.joinpath(internal_ca_filename)
+    internal_tls_config = config_dict.get("internal_tls")
+
+    if internal_tls_config and internal_tls_config.enabled:
+        internal_ca_src = Path(Path(internal_tls_config.tls_dir) / Path(internal_ca_filename))
+    else:
+        internal_ca_src = Path(internal_tls_dir / internal_ca_filename)
+
     ca_bundle_src = config_dict.get('registry_custom_ca_bundle_path')
     redis_tls_ca_src = config_dict.get('redis_custom_tls_ca_path')
     for src_path, dst_filename in (

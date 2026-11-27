@@ -33,6 +33,8 @@ class InternalTLS:
         self.verify_client_cert = verify_client_cert
         self.enabled = tls_enabled
         self.tls_dir = tls_dir
+        self.internal_tls_dir = Path(tls_dir) if tls_dir else internal_tls_dir
+
         if self.enabled:
             self.required_filenames = self.harbor_certs_filename
             if kwargs.get('with_trivy'):
@@ -65,7 +67,7 @@ class InternalTLS:
         Check cert and key files are correct
         """
 
-        path = Path(os.path.join(internal_tls_dir, filename))
+        path = Path(os.path.join(self.internal_tls_dir, filename))
 
         if not path.exists:
             if filename == 'harbor_internal_ca.crt':
@@ -95,8 +97,8 @@ class InternalTLS:
             # pass the validation if not enabled
             return
 
-        if not internal_tls_dir.exists():
-            raise Exception('Internal dir for tls {} not exist'.format(internal_tls_dir))
+        if not self.internal_tls_dir.exists():
+            raise Exception('Internal dir for tls {} not exist'.format(self.internal_tls_dir))
 
         for filename in self.required_filenames:
             self._check(filename)
@@ -109,11 +111,11 @@ class InternalTLS:
             logging.info('internal tls NOT enabled...')
             return
         original_tls_dir = get_realpath(self.tls_dir)
-        if internal_tls_dir.exists():
-            rmtree(internal_tls_dir)
-        copytree(original_tls_dir, internal_tls_dir, symlinks=True)
+        if self.internal_tls_dir.exists():
+            rmtree(self.internal_tls_dir)
+        copytree(original_tls_dir, self.internal_tls_dir, symlinks=True)
 
-        for file in internal_tls_dir.iterdir():
+        for file in self.internal_tls_dir.iterdir():
             if file.name.endswith('.key'):
                 file.chmod(0o600)
             elif file.name.endswith('.crt'):
